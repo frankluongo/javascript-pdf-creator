@@ -1,23 +1,5 @@
-// var pdf_creator_temp = {
-
-// 	init () {
-
-// 		this.galleryContainer = document.querySelector(`.final-tiles-gallery`);
-
-// 		this.galleyItems = Array.from(document.querySelectorAll(`.tile-inner`));
-
-// 		console.log(this.galleyItems);
-
-// 	}
-
-// }
-
-
-// pdf_creator_temp.init();
-
-
 var PDF_CREATOR = {
-// --------------------------------------------------------------------------------------
+
 	init(options = {}) {
 		this.options = options;
 		this.pdfButton = document.querySelector(`#pdf`);
@@ -32,7 +14,7 @@ var PDF_CREATOR = {
 		}
 	},
 
-// --------------------------------------------------------------------------------------
+
 	start() {
 		this.allSelectedImages = [];
 
@@ -65,7 +47,11 @@ var PDF_CREATOR = {
 
 		this.buildPDF();
 	},
-// --------------------------------------------------------------------------------------
+
+	//
+	// BUILDERS
+	//
+
 	buildPDF() {
 		this.findSelectedImages();
 		this.findSelectedRadioValue();
@@ -87,10 +73,34 @@ var PDF_CREATOR = {
 		this.savePDF();
 	},
 
+	//
+	// LISTENERS
+	//
+
+	addListeners() {
+		this.pdfButton.addEventListener('click', () => this.start());
+
+		for (const img of this.images) {
+
+			img.classList.remove(`everlightbox-trigger`);
+
+			img.addEventListener(`click`, (e) => {
+				e.preventDefault();
+				console.log('hello!');
+				img.classList.toggle(this.selectedClassJS);
+				img.classList.toggle(this.selectedClassCSS);				
+			});
+		}
+	},
+
+	//
+	// ACTIONS
+	//
+
 	findSelectedImages() {
 		this.selectedImages = Array.from(document.querySelectorAll(`.${this.selectedClassJS}`));
 	},
-// --------------------------------------------------------------------------------------
+
 	findSelectedRadioValue() {
 	
 		for (const radio_item of this.radioValues) {
@@ -99,7 +109,7 @@ var PDF_CREATOR = {
 			}
 		}
 	},
-// --------------------------------------------------------------------------------------
+
 	checkNumberOfImages() {
 		if(this.selectedImages.length >= this.limit) {
 			var overage = this.selectedImages.length - this.limit;
@@ -107,14 +117,13 @@ var PDF_CREATOR = {
 			return;
 		}
 	},
-// --------------------------------------------------------------------------------------
+
 	convertOurImages(callback) {
 		for (const selectedImage of this.selectedImages) {
 			this.base64EncodeImage(selectedImage);
 		}
-		//callback();
 	},
-// --------------------------------------------------------------------------------------
+
 	createPDFDocument() {
 		this.doc = new jsPDF({
 			orientation: 'l',
@@ -122,7 +131,7 @@ var PDF_CREATOR = {
 			format: [this.pdfWidth, this.pdfHeight]
 		});
 	},
-// --------------------------------------------------------------------------------------
+
 	assignNumberOfImagesPerPage() {
 
 		var width;
@@ -153,15 +162,10 @@ var PDF_CREATOR = {
 		this.printImage(width, height);
 
 	},
-// --------------------------------------------------------------------------------------
+
 	savePDF() {
 		this.doc.save('Lincoln-Barbour-Custom-PDF.pdf');
 	},
-// --------------------------------------------------------------------------------------
-	//
-	// HELPER FUNCTIONS
-	// 
-// --------------------------------------------------------------------------------------
 
 	assignImageSize(selectedPhoto, percentOfWidth, heightLimit) {
 		selectedPhoto.printWidth = 
@@ -245,7 +249,7 @@ var PDF_CREATOR = {
 		} // 4 Images Per Page		
 	},
 
-// --------------------------------------------------------------------------------------
+
 
 	printImage(desiredColumn, heightLimit) {
 
@@ -277,7 +281,7 @@ var PDF_CREATOR = {
 		}
 	},
 
-// --------------------------------------------------------------------------------------
+
 
 	addImageToDocument(dataURL, positionLeft, positionTop, imgWidth, imgHeight) {
 		
@@ -333,6 +337,10 @@ var PDF_CREATOR = {
 		lastItem.last = true;
 	},
 
+	//
+	// HELPER FUNCTIONS
+	// 
+
 	convertPixelsToInches(value) {
 		return value / 300;
 	},
@@ -363,29 +371,10 @@ var PDF_CREATOR = {
 		else
 			return false;
 	},
-// --------------------------------------------------------------------------------------
-	addListeners() {
-		this.pdfButton.addEventListener('click', () => this.start());
-
-		for (const img of this.images) {
-
-			img.classList.remove(`everlightbox-trigger`);
-
-			img.addEventListener(`click`, (e) => {
-				e.preventDefault();
-				console.log('hello!');
-				img.classList.toggle(this.selectedClassJS);
-				img.classList.toggle(this.selectedClassCSS);
-
-
-				
-			})
-		}
-	}
-// --------------------------------------------------------------------------------------
-
 
 };
+
+
 
     var callback = function() {
 		PDF_CREATOR.init({
