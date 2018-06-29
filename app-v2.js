@@ -13,13 +13,24 @@ class createPDF {
 
 		mapValues () {
 
+			this.selectCSS = 'selected';
+			this.selectJS = 'js-selected';
+
 			const {
 				orientation = 'l',
-				units = 'in'
+				units = 'in',
+				pdfW = 11,
+				pdfH = 8.5
+				limit = 50
+				imgClassName = 'pdf-image'
 			} = this.options;
 
 			this.orientation = orientation;
 			this.units = units;
+			this.pdfW = pdfW;
+			this.pdfH = pdfH;
+			this.limit = limit;
+			this.imgClassName = imgClassName;
 		};
 
 		init() {
@@ -27,53 +38,34 @@ class createPDF {
 		};
 
 		build() {
-			this.findSelectedImages();
+			this.selectImages();
 			this.findSelectedValues();
 			this.checkImages();
-			const convertImages = this.convertImages();
-			convertImages
-			.then(this.addIndicatorToLastObjectInArray)
-			.then(this.createPDFDocument)
-			.then(this.assignNumberOfImagesPerPage)
-			.then(this.savePDF);
+			this.convertImages();
 		};
 
 	//
 	// Actions
 	//
 
+		selectImages() {
+			this.selectedImages = this.returnArray(`.${this.selectJS}`);
+		};
+
+		selectRadio(radios) {
+			radios.indexOf(radio.selected)
+		};
+
 		convertImages() {
-	  	return new Promise((resolve, reject) => {
-
-	  		this.selectedImages.forEach((image) => {
-	  			let finalIMG = this.createIMG(image.href);
-	  			let canvas = this.createCanvas(img);
-	  		});
-
-	    	if (true) {
-	      	resolve("SUCCESS");
-	    	} else {
-	      	reject("FAILURE");
-	    	}
-	  	})
+  		this.selectedImages.forEach((image) => {
+  			let finalIMG = this.createIMG(image.href);
+  			let canvas = this.createCanvas(img);
+  		});
 		};
 
 		base64Encode(image) {
-
 			let finalIMG = this.createIMG(image.href);
 		};
-
-		printPDF () {
-			this.document = new jsPDF({
-				orientation: this.orientation,
-				unit: this.units,
-				format: [this.pdfW, this.pdfH]
-			});
-		};
-
-	//
-	// Helpers
-	//
 
 		createIMG (source) {
 			let photo = document.createElement('img');
@@ -91,6 +83,29 @@ class createPDF {
 
 			return canvas;
 		}
+
+		printPDF () {
+			this.document = new jsPDF({
+				orientation: this.orientation,
+				unit: this.units,
+				format: [this.pdfW, this.pdfH]
+			});
+		};
+
+	//
+	// Helpers
+	//
+
+		returnArray (selector, context) {
+			if (!context) {
+				context = document;
+			}
+			return Array.from(context.querySelectorAll(`${selector}`));
+		};
+
+		subtract (value1, value2) {
+			return value1 - value2;
+		};
 
 		convertToNumber (value) {
 			// parses integers with a radix of 10
