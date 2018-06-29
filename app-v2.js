@@ -5,8 +5,9 @@ class createPDF {
 		constructor(options = {}) {
 
 			if (options) {
-				this.name = options.name;
-				console.log(this.name);
+				this.options = options;
+			} else {
+				this.
 			}
 			this.init();
 		};
@@ -39,7 +40,12 @@ class createPDF {
 
 		convertImages() {
 	  	return new Promise((resolve, reject) => {
-	    	console.log("It is done.");
+
+	  		this.selectedImages.forEach((image) => {
+	  			let finalIMG = this.createIMG(image.href);
+	  			let canvas = this.createCanvas(img);
+	  		});
+
 	    	if (true) {
 	      	resolve("SUCCESS");
 	    	} else {
@@ -48,14 +54,44 @@ class createPDF {
 	  	})
 		};
 
+		base64Encode(image) {
+
+			let finalIMG = this.createIMG(image.href);
+		};
+
+		printPDF () {
+			this.document = new jsPDF({
+				orientation: this.orientation,
+				unit: this.units,
+				format: [this.pdfW, this.pdfH]
+			});
+		};
+
 	//
 	// Helpers
 	//
 
+		createIMG (source) {
+			let photo = document.createElement('img');
+			photo.src = source;
+
+			return photo;
+		};
+
+		createCanvas(image) {
+			let canvas = document.createElement("canvas");
+			canvas.width = image.width;
+			canvas.height = image.height;
+			let ctx = canvas.getContext("2d");
+			ctx.drawImage(image, 0, 0);
+
+			return canvas;
+		}
+
 		convertToNumber (value) {
 			// parses integers with a radix of 10
 			return parseInt(value, 10);
-		}
+		};
 
 		isOdd (value) {
 			if (value%2 == 0)
@@ -78,45 +114,20 @@ class createPDF {
 		};
 };
 
-function doSomething() {
-  return new Promise((resolve, reject) => {
-    console.log("It is done.");
-    // Succeed half of the time.
-    if (Math.random() > .5) {
-      resolve("SUCCESS")
-    } else {
-      reject("FAILURE")
-    }
-  })
-}
-
-function successCallback(result) {
-  console.log("It succeeded with " + result);
-}
-
-function failureCallback(error) {
-  console.log("It failed with " + error);
-}
-
-function nextFunc() {
-	setTimeout(() => {
-		console.log('huzzah!');
-	}, 3000);
-}
-
-function nextNextFunc() {
-	console.log('next!');
-}
-
-var promise = doSomething();
-promise
-	.then(successCallback, failureCallback)
-	.then(() => {
-		setTimeout(() => {
-			console.log('huzzah!');
-		}, 3000);
-	})
-	.then(nextNextFunc);
+function convertCurrency(amount) {
+    const converted = {
+      USD: amount * 0.76,
+      GPB: amount * 0.53,
+      AUD: amount * 1.01,
+      MEX: amount * 13.30
+    };
+    return converted;
+  }
+  function tipCalc({ total = 100, tip = 0.15, tax = 0.13 } = {}) {
+    return total + (tip * total) + (tax * total);
+  }
+  const bill = tipCalc({ tip: 0.20, total: 200 });
+  console.log(bill);
 
 
 

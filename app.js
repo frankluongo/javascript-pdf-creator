@@ -37,10 +37,10 @@ var PDF_CREATOR = {
 		this.columnFull = 91;
 		this.columnHalf = 45.5;
 
-		// 
+		//
 		// MEASUREMENTS
-		// 
-		
+		//
+
 		this.twoColGutter = this.convertPercentToMeasurement(this.gutter, this.pdfWidth);
 		this.twoColColumn = this.convertPercentToMeasurement(45.5, this.pdfWidth);
 		this.twoRowRow = this.convertPercentToMeasurement(50, this.pdfHeight);
@@ -58,10 +58,10 @@ var PDF_CREATOR = {
 		this.checkNumberOfImages();
 		this.convertOurImages();
 
-		this.waitForImages = setInterval(()=>{ 
+		this.waitForImages = setInterval(()=>{
 			if(this.allSelectedImages.length === this.selectedImages.length) {
 				this.afterImagesLoad();
-			}			
+			}
 		}, 0);
 	},
 
@@ -88,7 +88,7 @@ var PDF_CREATOR = {
 				e.preventDefault();
 				console.log('hello!');
 				img.classList.toggle(this.selectedClassJS);
-				img.classList.toggle(this.selectedClassCSS);				
+				img.classList.toggle(this.selectedClassCSS);
 			});
 		}
 	},
@@ -102,7 +102,7 @@ var PDF_CREATOR = {
 	},
 
 	findSelectedRadioValue() {
-	
+
 		for (const radio_item of this.radioValues) {
 			if (radio_item.checked) {
 				this.imagesPerPage = parseInt(radio_item.value);
@@ -118,7 +118,7 @@ var PDF_CREATOR = {
 		}
 	},
 
-	convertOurImages(callback) {
+	convertOurImages() {
 		for (const selectedImage of this.selectedImages) {
 			this.base64EncodeImage(selectedImage);
 		}
@@ -168,27 +168,27 @@ var PDF_CREATOR = {
 	},
 
 	assignImageSize(selectedPhoto, percentOfWidth, heightLimit) {
-		selectedPhoto.printWidth = 
+		selectedPhoto.printWidth =
 			this
 			.convertPercentToMeasurement(percentOfWidth, this.pdfWidth);
 
 		selectedPhoto.printHeight =
 			this
 			.scaleImageProportions(
-				selectedPhoto.height, 
-				selectedPhoto.printWidth, 
+				selectedPhoto.height,
+				selectedPhoto.printWidth,
 				selectedPhoto.width
 				);
 
 		if (selectedPhoto.printHeight >= heightLimit) {
-				
-				selectedPhoto.printHeight = 
+
+				selectedPhoto.printHeight =
 				this
 				.convertPercentToMeasurement(
-					this.columnFull, 
+					this.columnFull,
 					heightLimit);
 
-				selectedPhoto.printWidth = 
+				selectedPhoto.printWidth =
 					this
 					.scaleImageProportions(
 						selectedPhoto.width,
@@ -202,7 +202,7 @@ var PDF_CREATOR = {
 		if(this.imagesPerPage === 1) {
 			photo.fromLeft = this.centerElement(photo.printWidth, this.pdfWidth);
 			photo.fromTop = this.centerElement(photo.printHeight, this.pdfHeight);
-		} 
+		}
 
 		else if(this.imagesPerPage == 2) {
 
@@ -224,29 +224,29 @@ var PDF_CREATOR = {
 				case 1:
 					photo.fromLeft = this.makeElementClose(this.twoColGutter, this.twoColColumn, photo.printWidth);
 				break;
-				
+
 
 				case 2:
 					photo.fromLeft = this.makeElementFar(this.twoColGutter, this.twoColColumn, photo.printWidth);
 				break;
-				
+
 
 				case 3:
 					photo.fromLeft = this.makeElementClose(this.twoColGutter, this.twoColColumn, photo.printWidth);
 					photo.fromTop = this.makeElementFar(0, this.twoRowRow, photo.printHeight);
 				break;
-				
-				
+
+
 				case 4:
 					photo.fromLeft = this.makeElementFar(this.twoColGutter, this.twoColColumn, photo.printWidth);
 					photo.fromTop = this.makeElementFar(0, this.twoRowRow, photo.printHeight);
 				break;
 
-				
+
 				default:
 			}
 
-		} // 4 Images Per Page		
+		} // 4 Images Per Page
 	},
 
 
@@ -265,7 +265,7 @@ var PDF_CREATOR = {
 				photo.printWidth,
 				photo.printHeight);
 
-			
+
 
 			if(!photo.last && this.imagesPerPage === 1) {
 				this.doc.addPage();
@@ -284,12 +284,12 @@ var PDF_CREATOR = {
 
 
 	addImageToDocument(dataURL, positionLeft, positionTop, imgWidth, imgHeight) {
-		
+
 		this.doc.addImage(
-			dataURL, 
+			dataURL,
 			'JPEG',
 			positionLeft,
-			positionTop, 
+			positionTop,
 			imgWidth,
 			imgHeight
 		);
@@ -339,7 +339,7 @@ var PDF_CREATOR = {
 
 	//
 	// HELPER FUNCTIONS
-	// 
+	//
 
 	convertPixelsToInches(value) {
 		return value / 300;
