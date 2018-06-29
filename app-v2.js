@@ -3,12 +3,7 @@ class createPDF {
 	// Constructor
 	//
 		constructor(options = {}) {
-
-			if (options) {
-				this.options = options;
-			} else {
-				this.
-			}
+			this.options = options;
 			this.init();
 		};
 
@@ -16,10 +11,19 @@ class createPDF {
 	// Builders
 	//
 
+		mapValues () {
+
+			const {
+				orientation = 'l',
+				units = 'in'
+			} = this.options;
+
+			this.orientation = orientation;
+			this.units = units;
+		};
+
 		init() {
-			console.log('initialized');
-			var thing = this.findImages('hello');
-			console.log(thing);
+			this.mapValues();
 		};
 
 		build() {
@@ -114,22 +118,8 @@ class createPDF {
 		};
 };
 
-function convertCurrency(amount) {
-    const converted = {
-      USD: amount * 0.76,
-      GPB: amount * 0.53,
-      AUD: amount * 1.01,
-      MEX: amount * 13.30
-    };
-    return converted;
-  }
-  function tipCalc({ total = 100, tip = 0.15, tax = 0.13 } = {}) {
-    return total + (tip * total) + (tax * total);
-  }
-  const bill = tipCalc({ tip: 0.20, total: 200 });
-  console.log(bill);
-
-
-
-// const test = testFunction();
+var obj = new createPDF({
+	thing: 200,
+	otherThing: 3000
+});
 
