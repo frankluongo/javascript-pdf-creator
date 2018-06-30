@@ -1,389 +1,511 @@
-var PDF_CREATOR = {
 
-	init(options = {}) {
-		this.options = options;
-		this.pdfButton = document.querySelector(`#pdf`);
-		this.images = Array.from(document.querySelectorAll(`.${this.options.imageClass}`));
-		this.selectedClassCSS = `selected`;
-		this.selectedClassJS = `js-selected`;
-		this.body = document.querySelector('body');
+class createPDF {
+	//
+	// Constructor
+	//
 
+		constructor(options = {}) {
+			this.options = options;
+			this.init();
+		};
 
-		if(this.images) {
-			this.addListeners();
+	//
+	// Initalizers
+	//
+		logOptions () {
+
+			this.selectCSS = 'selected';
+			this.selectJS = 'js-selected';
+			this.moduleName = 'PDFCreator';
+			this.selectImageObjects = [];
+			this.loadedImages = [];
+
+			const {
+				orientation = 'l',
+				units = 'in',
+				pdfW = 11,
+				pdfH = 8.5,
+				limit = 50,
+				imgClassName = 'pdf-image',
+				button = `${this.moduleName}.Button`,
+				radios = `${this.moduleName}.RadioButtons`,
+				images = `${this.moduleName}.Image`,
+				container = 'body',
+				clear = true,
+				column = 91,
+				gutter = 3
+			} = this.options;
+
+			this.orientation = orientation;
+			this.units = units;
+			this.pdfW = pdfW;
+			this.pdfH = pdfH;
+			this.limit = limit;
+			this.imgClassName = imgClassName;
+			this.button = `[data-js="${this.moduleName}.Button"]`;
+			this.radios = `[data-js="${this.moduleName}.RadioButtons"]`;
+			this.images = `[data-js="${this.moduleName}.Image"]`;
+			this.container = container;
+			this.clear = clear;
+
+			this.columnPercent = column;
+			this.gutterPercent = gutter;
+
+			this.column = this.convertPercent(column, this.pdfW);
+			this.gutter = this.convertPercent(gutter, this.pdfW);
+
+			this.pdfHeightHalf = this.convertPercent(50, this.pdfH);
+			this.doubleGutter = this.addElements(this.gutter, this.gutter);
+		};
+
+		createObjectElements () {
+			this.pdfButton = this.returnElement(this.button);
+			this.pdfRadios = this.returnArray(this.radios);
+			this.pdfImages = this.returnArray(this.images);
+			this.page = this.returnElement(this.container);
+		};
+
+		init() {
+			this.logOptions();
+			this.createObjectElements();
+			this.observeChanges();
+		};
+
+	//
+	// Builders
+	//
+		loadImages () {
+			this.selectImages();
+			this.checkLimit();
+			this.createFinalImages();
+		};
+
+		afterImagesLoad () {
+			this.convertImagesForPDF();
+			this.buildPDF();
+		};
+
+		buildPDF () {
+			this.blankPDF();
+			this.setPDFParams();
+			this.printImages();
+			this.savePDF();
+			this.resetPDF();
 		}
-	},
-
-
-	start() {
-		this.allSelectedImages = [];
-
-		this.radioValues = Array.from(document.querySelectorAll('.selection-items'));
-
-		this.limit = 50;
-
-		this.index = 0;
-		this.ofFour = 1;
-
-		this.pdfWidth = 11;
-		this.pdfHeight = 8.5;
-		this.pdfHeightHalf = (this.pdfHeight / 2);
-
-		//
-		// PERCENTS
-		//
-
-		this.gutter = 3;
-		this.columnFull = 91;
-		this.columnHalf = 45.5;
-
-		//
-		// MEASUREMENTS
-		//
-
-		this.twoColGutter = this.convertPercentToMeasurement(this.gutter, this.pdfWidth);
-		this.twoColColumn = this.convertPercentToMeasurement(45.5, this.pdfWidth);
-		this.twoRowRow = this.convertPercentToMeasurement(50, this.pdfHeight);
-
-		this.buildPDF();
-	},
-
 	//
-	// BUILDERS
+	// Image Actions
 	//
+		selectImages() {
+			this.selectedImages = this.returnArray(`.${this.selectJS}`);
+			this.selectedImagesLength = this.selectedImages.length;
+		};
 
-	buildPDF() {
-		this.findSelectedImages();
-		this.findSelectedRadioValue();
-		this.checkNumberOfImages();
-		this.convertOurImages();
+		checkLimit() {
+			if (this.selectedImagesLength >= this.limit) {
+				let overage = this.subtract(this.selectedImagesLength, this.limit);
 
-		this.waitForImages = setInterval(()=>{
-			if(this.allSelectedImages.length === this.selectedImages.length) {
-				this.afterImagesLoad();
+				alert(`Please remove ${overage} Images and try again.`);
+				return;
 			}
-		}, 0);
-	},
+		};
 
-	afterImagesLoad() {
-		clearInterval(this.waitForImages);
-		this.addIndicatorToLastObjectInArray();
-		this.createPDFDocument();
-		this.assignNumberOfImagesPerPage();
-		this.savePDF();
-	},
+		createFinalImages () {
+			this.selectedImages.forEach((image) => {
+				let finalIMG = this.createImage(image);
 
-	//
-	// LISTENERS
-	//
+				if(finalIMG.width === 0 || finalIMG.height === 0) {
+					finalIMG.addEventListener('load', () => {
+						this.handleFinalImage(finalIMG);
+					});
+					return;
+				} else {
+					this.handleFinalImage(finalIMG);
+				}
 
-	addListeners() {
-		this.pdfButton.addEventListener('click', () => this.start());
 
-		for (const img of this.images) {
-
-			img.classList.remove(`everlightbox-trigger`);
-
-			img.addEventListener(`click`, (e) => {
-				e.preventDefault();
-				console.log('hello!');
-				img.classList.toggle(this.selectedClassJS);
-				img.classList.toggle(this.selectedClassCSS);
 			});
-		}
-	},
+		};
+
+			createImage (image) {
+
+				let photo = document.createElement('img');
+
+				let hiRes = image.getAttribute('data-hi-res');
+
+				if (hiRes) {
+					photo.src = hiRes;
+				}
+				else if (image.href) {
+					photo.src = image.href;
+				}
+				else if (image.src) {
+					photo.src = image.src;
+				}
+
+				return photo;
+			};
+
+			handleFinalImage (image) {
+				this.loadedImages.push(image);
+				this.checkForLoadComplete();
+			};
+
+			checkForLoadComplete () {
+				if (this.selectedImagesLength === this.loadedImages.length) {
+					this.afterImagesLoad();
+				}
+			}
+
+		convertImagesForPDF() {
+  		this.loadedImages.forEach((image, index) => {
+  			let canvas = this.createCanvas(image);
+  			let imageObject = this.createImageObject(image, canvas, index);
+  			this.selectImageObjects.push(imageObject);
+  		});
+  		this.addIndicator(this.selectImageObjects);
+		};
+
+			createCanvas(image) {
+				let canvas = document.createElement("canvas");
+				canvas.width = image.width;
+				canvas.height = image.height;
+				let ctx = canvas.getContext("2d");
+				ctx.drawImage(image, 0, 0);
+				let dataURL = canvas.toDataURL('image/jpeg');
+
+				return dataURL;
+			}
+
+			createImageObject(image, canvasURL, index) {
+				let imageObject = {
+					url: canvasURL,
+					width: this.convertPXtoIn(image.width),
+					height: this.convertPXtoIn(image.height),
+					index: index,
+					last: false
+				}
+				return imageObject;
+			};
+
+			addIndicator(array) {
+				let last = this.findLastIndex(array);
+				array[last].last = true;
+			}
 
 	//
-	// ACTIONS
+	// PDF Actions
 	//
 
-	findSelectedImages() {
-		this.selectedImages = Array.from(document.querySelectorAll(`.${this.selectedClassJS}`));
-	},
+		blankPDF () {
+			this.pdfDocument = new jsPDF({
+				orientation: this.orientation,
+				unit: this.units,
+				format: [this.pdfW, this.pdfH]
+			});
+		};
 
-	findSelectedRadioValue() {
+		setPDFParams () {
 
-		for (const radio_item of this.radioValues) {
-			if (radio_item.checked) {
-				this.imagesPerPage = parseInt(radio_item.value);
-			}
-		}
-	},
+			this.imagesPerPage = this.selectRadio();
 
-	checkNumberOfImages() {
-		if(this.selectedImages.length >= this.limit) {
-			var overage = this.selectedImages.length - this.limit;
-			alert(`Please remove ${overage} Images and try again.`);
-			return;
-		}
-	},
+			// This code is brittle, what if the client wants the user to be able to select more than just 1, 2 or 4 images per page?
 
-	convertOurImages() {
-		for (const selectedImage of this.selectedImages) {
-			this.base64EncodeImage(selectedImage);
-		}
-	},
-
-	createPDFDocument() {
-		this.doc = new jsPDF({
-			orientation: 'l',
-			unit: 'in',
-			format: [this.pdfWidth, this.pdfHeight]
-		});
-	},
-
-	assignNumberOfImagesPerPage() {
-
-		var width;
-		var height;
-
-		switch(this.imagesPerPage) {
-			case 1:
-				height = this.pdfHeight;
-				width = this.columnFull;
-			break;
-
-
-			case 2:
-				height = this.pdfHeight;
-				width = this.columnHalf;
-			break;
-
-
-			case 4:
-				height = this.pdfHeightHalf;
-				width = this.columnHalf;
-			break;
-
-
-			default:
-		}
-
-		this.printImage(width, height);
-
-	},
-
-	savePDF() {
-		this.doc.save('Lincoln-Barbour-Custom-PDF.pdf');
-	},
-
-	assignImageSize(selectedPhoto, percentOfWidth, heightLimit) {
-		selectedPhoto.printWidth =
-			this
-			.convertPercentToMeasurement(percentOfWidth, this.pdfWidth);
-
-		selectedPhoto.printHeight =
-			this
-			.scaleImageProportions(
-				selectedPhoto.height,
-				selectedPhoto.printWidth,
-				selectedPhoto.width
-				);
-
-		if (selectedPhoto.printHeight >= heightLimit) {
-
-				selectedPhoto.printHeight =
-				this
-				.convertPercentToMeasurement(
-					this.columnFull,
-					heightLimit);
-
-				selectedPhoto.printWidth =
-					this
-					.scaleImageProportions(
-						selectedPhoto.width,
-						selectedPhoto.printHeight,
-						selectedPhoto.height);
-			}
-	},
-
-	positionImage(photo) {
-
-		if(this.imagesPerPage === 1) {
-			photo.fromLeft = this.centerElement(photo.printWidth, this.pdfWidth);
-			photo.fromTop = this.centerElement(photo.printHeight, this.pdfHeight);
-		}
-
-		else if(this.imagesPerPage == 2) {
-
-			photo.fromTop = this.centerElement(photo.printHeight, this.pdfHeight);
-
-			if (this.isOdd(photo.index)) {
-				photo.fromLeft = this.makeElementClose(this.twoColGutter, this.twoColColumn, photo.printWidth);
-			} else {
-				photo.fromLeft = this.makeElementFar(this.twoColGutter, this.twoColColumn, photo.printWidth);
-			}
-		}
-
-		else if(this.imagesPerPage == 4) {
-
-			photo.fromTop = this.centerElement(photo.printHeight, this.pdfHeightHalf);
-
-
-			switch (photo.ofFour) {
+			switch(this.imagesPerPage) {
 				case 1:
-					photo.fromLeft = this.makeElementClose(this.twoColGutter, this.twoColColumn, photo.printWidth);
+					this.pdfPrintHeight = this.pdfH;
+					this.pdfPrintWidth = this.column;
 				break;
-
 
 				case 2:
-					photo.fromLeft = this.makeElementFar(this.twoColGutter, this.twoColColumn, photo.printWidth);
+					this.pdfPrintHeight = this.pdfH;
+					this.pdfPrintWidth = this.findHalf(this.column);
 				break;
-
-
-				case 3:
-					photo.fromLeft = this.makeElementClose(this.twoColGutter, this.twoColColumn, photo.printWidth);
-					photo.fromTop = this.makeElementFar(0, this.twoRowRow, photo.printHeight);
-				break;
-
 
 				case 4:
-					photo.fromLeft = this.makeElementFar(this.twoColGutter, this.twoColColumn, photo.printWidth);
-					photo.fromTop = this.makeElementFar(0, this.twoRowRow, photo.printHeight);
+					this.pdfPrintHeight = this.findHalf(this.pdfH);
+					this.pdfPrintWidth = this.findHalf(this.column);
 				break;
-
 
 				default:
 			}
+		};
 
-		} // 4 Images Per Page
-	},
+		printImages() {
 
+			this.selectImageObjects.forEach((imageObject) => {
+				this.sizeImage(imageObject);
+				this.positionImage(imageObject);
+				this.addImageToDocument(imageObject);
+				this.nextPage(imageObject);
+			});
+		};
 
+			sizeImage (imageObject) {
 
-	printImage(desiredColumn, heightLimit) {
+				imageObject.printWidth = this.pdfPrintWidth;
 
-		for (const photo of this.allSelectedImages) {
+				imageObject.printHeight = this.scaleProportions(
+					imageObject.height,
+					imageObject.width,
+					imageObject.printWidth,
+				);
 
-			this.assignImageSize(photo, desiredColumn, heightLimit);
-			this.positionImage(photo);
+				if (imageObject.printHeight >= this.pdfPrintHeight) {
 
-			this.addImageToDocument(
-				photo.dataURL,
-				photo.fromLeft,
-				photo.fromTop,
-				photo.printWidth,
-				photo.printHeight);
+					imageObject.printHeight = this.convertPercent(this.columnPercent, this.pdfPrintHeight);
 
-
-
-			if(!photo.last && this.imagesPerPage === 1) {
-				this.doc.addPage();
-			} else if (!photo.last && this.imagesPerPage === 2) {
-				if(!this.isOdd(photo.index)) {
-					this.doc.addPage();
+					imageObject.printWidth = this.scaleProportions(
+						imageObject.width,
+						imageObject.height,
+						imageObject.printHeight
+					);
 				}
-			} else if(!photo.last && this.imagesPerPage === 4) {
-				if(photo.ofFour === 4) {
-					this.doc.addPage();
+			};
+
+			positionImage (imageObject) {
+
+				switch(this.imagesPerPage) {
+					case 1:
+						this.oneImagePerPage(imageObject);
+					break;
+
+					case 2:
+						this.twoImagesPerPage(imageObject);
+					break;
+
+					case 4:
+						this.fourImagesPerPage(imageObject);
+					break;
+
+					default:
+				}
+			};
+
+				oneImagePerPage (imageObject) {
+						imageObject.left = this.centerElement(imageObject.printWidth, this.pdfW);
+						imageObject.top = this.centerElement(imageObject.printHeight, this.pdfH);
+				};
+
+				twoImagesPerPage (imageObject) {
+					var centerWidth = this.centerElement(imageObject.printWidth, this.pdfPrintWidth);
+					var farFromLeft = this.addElements(this.doubleGutter, this.pdfPrintWidth);
+
+					let odd = this.isOdd(imageObject.index);
+
+					if (odd) {
+						imageObject.left = this.addElements(this.gutter, centerWidth);
+					} else {
+						imageObject.left = (farFromLeft + centerWidth);
+					}
+
+					imageObject.top = this.centerElement(imageObject.printHeight, this.pdfH);
+				};
+
+				fourImagesPerPage (imageObject) {
+					var centerWidth = this.centerElement(imageObject.printWidth, this.pdfPrintWidth);
+					var centerHalfHeight = this.centerElement(imageObject.printHeight, this.pdfHeightHalf);
+					var farFromLeft = this.addElements(this.doubleGutter, this.pdfPrintWidth);
+
+					let index = this.addElements(imageObject.index, 1);
+					let ofFour = this.findModulus(index, 4);
+
+					switch (ofFour) {
+						case 1:
+							imageObject.top = this.centerElement(imageObject.printHeight, this.pdfHeightHalf);
+							imageObject.left = this.addElements(this.gutter, centerWidth);
+						break;
+
+						case 2:
+							imageObject.top = this.centerElement(imageObject.printHeight, this.pdfHeightHalf);
+							imageObject.left = this.addElements(farFromLeft, centerWidth);
+						break;
+
+						case 3:
+							imageObject.left = this.addElements(this.gutter, centerWidth);
+							imageObject.top = this.addElements(this.pdfHeightHalf, centerHalfHeight);
+						break;
+
+						case 0:
+							imageObject.left = this.addElements(farFromLeft, centerWidth);
+							imageObject.top = this.addElements(this.pdfHeightHalf, centerHalfHeight);
+						break;
+
+						default:
+					}
+				}
+
+			addImageToDocument (imageObject) {
+				this.pdfDocument.addImage(
+					imageObject.url,
+					'JPEG',
+					imageObject.left,
+					imageObject.top,
+					imageObject.printWidth,
+					imageObject.printHeight
+				);
+			};
+
+			nextPage(imageObject) {
+
+				if(!imageObject.last && this.imagesPerPage === 1) {
+					this.pdfDocument.addPage();
+				}
+				else
+				if (!imageObject.last && this.imagesPerPage === 2) {
+
+					if(!this.isOdd(imageObject.index)) {
+						this.pdfDocument.addPage();
+					}
+				}
+				else
+				if(!imageObject.last && this.imagesPerPage === 4) {
+
+					let index = this.addElements(imageObject.index, 1);
+					let ofFour = this.findModulus(index, 4);
+
+					if(ofFour === 0) {
+						this.pdfDocument.addPage();
+					}
+				}
+			};
+
+		savePDF () {
+			this.pdfDocument.save('Lincoln-Barbour-Custom-PDF.pdf');
+		};
+		resetPDF () {
+
+			if (this.clear) {
+				this.selectedImages.forEach((image) => {
+					this.classActions(image, [this.selectCSS, this.selectJS], 'remove');
+				});
+			}
+			this.selectedImages = [];
+			this.loadedImages = [];
+			this.selectImageObjects = [];
+		}
+	//
+	// Subactions
+	// -- actions that are too small to deserve a place in the timeline of events
+
+		selectRadio() {
+			for (let radio of this.pdfRadios) {
+				if (radio.checked) {
+					return this.convertToNumber(radio.value);
 				}
 			}
+		};
+
+	//
+	// Observers
+	//
+
+		observeChanges() {
+			this.observeImages();
+			this.observeButton();
+		};
+
+		observeImages () {
+			this.pdfImages.forEach((image) => {
+				this.classActions(image, ['everlightbox-trigger'], 'remove');
+				image.addEventListener('click', (event) => {
+					event.preventDefault();
+					this.classActions(image, [this.selectCSS, this.selectJS], 'toggle');
+				});
+			});
+		};
+
+		observeButton() {
+			this.pdfButton.addEventListener('click', () => this.loadImages());
+		};
+
+	//
+	// Helpers
+	//
+
+		findModulus(value, modulus) {
+			return value % modulus;
+		};
+
+		findHalf(value) {
+			return value / 2;
+		};
+
+		findLastIndex (array) {
+			return array.length - 1;
+		};
+
+		classActions (element, classNames, action) {
+			classNames.forEach((className) => {
+				if (action === 'remove') {
+					if(element.classList.contains(className)) {
+						element.classList.remove(className);
+					}
+				}
+
+				if (action === 'add') {
+					element.classList.add(className);
+				}
+
+				if (action === 'toggle') {
+					element.classList.toggle(className);
+				}
+
+			});
+		};
+
+		returnElement (value) {
+			return document.querySelector(`${value}`);
+		};
+
+		returnArray (selector, context) {
+			if (!context) {
+				context = document;
+			}
+			return Array.from(context.querySelectorAll(`${selector}`));
+		};
+
+		subtract (value1, value2) {
+			return value1 - value2;
+		};
+
+		addElements (value1, value2) {
+			return value1 + value2;
+		};
+
+		multiply (value1, value2) {
+			return value1 * value2;
 		}
-	},
 
+		convertToNumber (value) {
+			// parses integers with a radix of 10
+			return parseInt(value, 10);
+		};
 
+		isOdd (value) {
+			if (value%2 == 0)
+				return true;
+			else
+				return false;
+		};
 
-	addImageToDocument(dataURL, positionLeft, positionTop, imgWidth, imgHeight) {
+		convertPercent (percent, total) {
+			return (percent * total) / 100;
+		};
 
-		this.doc.addImage(
-			dataURL,
-			'JPEG',
-			positionLeft,
-			positionTop,
-			imgWidth,
-			imgHeight
-		);
-	},
+		convertPXtoIn (pixelVal) {
+			// 300 = Pixels per inch
+			return pixelVal / 300;
+		};
 
-	base64EncodeImage(image) {
+		centerElement (elem, full) {
+			return (full - elem) / 2;
+		};
 
-		let hiResImage = image.href;
-		let finalPhoto = document.createElement('img');
-		finalPhoto.src = hiResImage;
-
-  		let canvas = document.createElement("canvas");
-
-  		finalPhoto.addEventListener('load', () => {
-	  		canvas.width = finalPhoto.width;
-	  		canvas.height = finalPhoto.height;
-	  		let ctx = canvas.getContext("2d");
-	  		ctx.drawImage(finalPhoto, 0, 0);
-	  		let dataURL = canvas.toDataURL('image/jpeg');
-
-	  		let imageData = {
-	  			dataURL: dataURL,
-	  			width: this.convertPixelsToInches(finalPhoto.width),
-	  			height: this.convertPixelsToInches(finalPhoto.height),
-	  			index: this.index,
-	  			last: false,
-	  			ofFour: this.ofFour
-	  		}
-	  		this.index++;
-	  		this.ofFour++;
-	  		if(this.ofFour > 4) {
-	  			this.ofFour = 1;
-	  		}
-
-	  		this.allSelectedImages.push(imageData);
-
-	  		console.log(imageData);
-  		});
-	},
-
-	addIndicatorToLastObjectInArray() {
-		console.log(this.allSelectedImages);
-		var lastItemNumber = this.allSelectedImages.length - 1;
-		var lastItem = this.allSelectedImages[lastItemNumber];
-		lastItem.last = true;
-	},
-
-	//
-	// HELPER FUNCTIONS
-	//
-
-	convertPixelsToInches(value) {
-		return value / 300;
-	},
-
-	centerElement(element, full_measurement) {
-		return (full_measurement - element) / 2;
-	},
-
-	convertPercentToMeasurement(percent, total) {
-		return (percent * total) / 100
-	},
-
-	scaleImageProportions(original_proportion_1, new_proportion_2, old_proportion_2) {
-		return (original_proportion_1 * new_proportion_2) / old_proportion_2;
-	},
-
-	makeElementClose(gutter, columnWidth, elementWidth) {
-		return gutter + ( this.centerElement(elementWidth, columnWidth) );
-	},
-
-	makeElementFar(gutter, columnWidth, elementWidth) {
-		return columnWidth + (gutter*2) + ( this.centerElement(elementWidth, columnWidth) );
-	},
-
-	isOdd(value) {
-		if (value%2 == 0)
-			return true;
-		else
-			return false;
-	},
-
+		scaleProportions (origProp1, origProp2, newProp2) {
+			return (origProp1 * newProp2) / origProp2;
+		};
 };
 
-
-
-    var callback = function() {
-		PDF_CREATOR.init({
-			imageClass: 'tile-inner'
-		});
-    };
-
-if (document.readyState === "complete" || (document.readyState !== "loading" && !document.documentElement.doScroll) ) {
-  callback();
-} else {
-  document.addEventListener("DOMContentLoaded", callback);
-}
+document.addEventListener("DOMContentLoaded", () => {
+	var obj = new createPDF();
+});
