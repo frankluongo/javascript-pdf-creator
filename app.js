@@ -3,7 +3,6 @@ class createPDF {
 	//
 	// Constructor
 	//
-
 		constructor(options = {}) {
 			this.options = options;
 			this.init();
@@ -92,6 +91,7 @@ class createPDF {
 			this.savePDF();
 			this.resetPDF();
 		}
+
 	//
 	// Image Actions
 	//
@@ -195,7 +195,6 @@ class createPDF {
 	//
 	// PDF Actions
 	//
-
 		blankPDF () {
 			this.pdfDocument = new jsPDF({
 				orientation: this.orientation,
@@ -383,10 +382,9 @@ class createPDF {
 			this.loadedImages = [];
 			this.selectImageObjects = [];
 		}
-	//
+
 	// Subactions
 	// -- actions that are too small to deserve a place in the timeline of events
-
 		selectRadio() {
 			for (let radio of this.pdfRadios) {
 				if (radio.checked) {
@@ -398,7 +396,6 @@ class createPDF {
 	//
 	// Observers
 	//
-
 		observeChanges() {
 			this.observeImages();
 			this.observeButton();
@@ -421,7 +418,6 @@ class createPDF {
 	//
 	// Helpers
 	//
-
 		findModulus(value, modulus) {
 			return value % modulus;
 		};
@@ -509,3 +505,4 @@ class createPDF {
 document.addEventListener("DOMContentLoaded", () => {
 	var obj = new createPDF();
 });
+
