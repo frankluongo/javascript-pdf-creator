@@ -65,6 +65,11 @@ class createPDF {
 		};
 
 		init() {
+
+			if (!jsPDF) {
+				this.appendJSDF();
+			}
+
 			this.logOptions();
 			this.createObjectElements();
 			this.observeChanges();
@@ -385,12 +390,19 @@ class createPDF {
 
 	// Subactions
 	// -- actions that are too small to deserve a place in the timeline of events
-		selectRadio() {
+		selectRadio () {
 			for (let radio of this.pdfRadios) {
 				if (radio.checked) {
 					return this.convertToNumber(radio.value);
 				}
 			}
+		};
+
+		appendJSDF () {
+			let url = 'https://unpkg.com/jspdf@latest/dist/jspdf.min.js';
+			let script = document.createElement('script');
+			script.src = url;
+			this.container.appendChild(script);
 		};
 
 	//
