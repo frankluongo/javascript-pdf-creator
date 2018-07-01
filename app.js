@@ -501,7 +501,7 @@ class createPDF {
 		};
 
 		convertPXtoIn (pixelVal) {
-			// 300 = Pixels per inch
+			// 300 = Pixels per inch when printing
 			return pixelVal / 300;
 		};
 
