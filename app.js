@@ -13,11 +13,15 @@ class createPDF {
 	//
 		logOptions () {
 
+			// These settings won't change, regardless of implementation
+
 			this.selectCSS = 'selected';
 			this.selectJS = 'js-selected';
 			this.moduleName = 'PDFCreator';
 			this.selectImageObjects = [];
 			this.loadedImages = [];
+
+			// Here we use destructuring to reassign any items that may have changed
 
 			const {
 				orientation = 'l',
@@ -25,27 +29,31 @@ class createPDF {
 				pdfW = 11,
 				pdfH = 8.5,
 				limit = 50,
-				imgClassName = 'pdf-image',
 				button = `${this.moduleName}.Button`,
 				radios = `${this.moduleName}.RadioButtons`,
 				images = `${this.moduleName}.Image`,
 				container = 'body',
 				clear = true,
 				column = 91,
-				gutter = 3
+				gutter = 3,
+				name = 'My-Custom-PDF'
 			} = this.options;
+
+			// Once we have our options, we assign them using 'this' so they're available everywhere we need them
 
 			this.orientation = orientation;
 			this.units = units;
 			this.pdfW = pdfW;
 			this.pdfH = pdfH;
 			this.limit = limit;
-			this.imgClassName = imgClassName;
 			this.button = `[data-js="${this.moduleName}.Button"]`;
 			this.radios = `[data-js="${this.moduleName}.RadioButtons"]`;
 			this.images = `[data-js="${this.moduleName}.Image"]`;
 			this.container = container;
 			this.clear = clear;
+			this.name = name;
+
+			// These are measurement-based variables for positioning and sizing elements on the PDF
 
 			this.columnPercent = column;
 			this.gutterPercent = gutter;
@@ -65,7 +73,7 @@ class createPDF {
 		};
 
 		init() {
-
+			// Check to see if the jsPDF Script is available, and if not, add it.
 			if (!jsPDF) {
 				this.appendJSDF();
 			}
@@ -75,6 +83,12 @@ class createPDF {
 			this.observeChanges();
 		};
 
+			appendJSDF () {
+				let url = 'https://unpkg.com/jspdf@latest/dist/jspdf.min.js';
+				let script = document.createElement('script');
+				script.src = url;
+				this.container.appendChild(script);
+			};
 	//
 	// Builders
 	//
@@ -117,6 +131,9 @@ class createPDF {
 		createFinalImages () {
 			this.selectedImages.forEach((image) => {
 				let finalIMG = this.createImage(image);
+
+				// This is a workaround for Safari. Safari doesn't render a height or width of an image unless it's loaded.
+				// So if we don't have a width or height, we pause, load the image, and then resume our process.
 
 				if(finalIMG.width === 0 || finalIMG.height === 0) {
 					finalIMG.addEventListener('load', () => {
@@ -233,6 +250,14 @@ class createPDF {
 				default:
 			}
 		};
+
+			selectRadio () {
+				for (let radio of this.pdfRadios) {
+					if (radio.checked) {
+						return this.convertToNumber(radio.value);
+					}
+				}
+			};
 
 		printImages() {
 
@@ -374,7 +399,7 @@ class createPDF {
 			};
 
 		savePDF () {
-			this.pdfDocument.save('Lincoln-Barbour-Custom-PDF.pdf');
+			this.pdfDocument.save(`${this.name}.pdf`);
 		};
 		resetPDF () {
 
@@ -387,23 +412,6 @@ class createPDF {
 			this.loadedImages = [];
 			this.selectImageObjects = [];
 		}
-
-	// Subactions
-	// -- actions that are too small to deserve a place in the timeline of events
-		selectRadio () {
-			for (let radio of this.pdfRadios) {
-				if (radio.checked) {
-					return this.convertToNumber(radio.value);
-				}
-			}
-		};
-
-		appendJSDF () {
-			let url = 'https://unpkg.com/jspdf@latest/dist/jspdf.min.js';
-			let script = document.createElement('script');
-			script.src = url;
-			this.container.appendChild(script);
-		};
 
 	//
 	// Observers
